@@ -196,7 +196,7 @@ const CFG={
  maps:[
   {title:"Tư gia Nhà gái",lat:null,lng:null,img:"",addr:"TDP Thượng Lan, Phường Tự Lạn, TP. Bắc Ninh",url:"https://maps.app.goo.gl/hKr6y67D4p1DS97Y9?g_st=ic"},
   {title:"Tư gia Nhà trai",lat:21.22078,lng:106.10047,img:"",addr:"60 Thân Công Tài, Phường Nếnh, TP. Bắc Ninh",url:"https://www.google.com/maps/place/64C2%2B85G+NH%C3%80+TR%E1%BB%8C+CHINH+H%E1%BA%A2I+TAM+T%E1%BA%A6NG,+x%C3%B3m+Ch%C3%B9a,+N%E1%BA%BFnh,+B%E1%BA%AFc+Ninh/data=!4m2!3m1!1s0x31350de098ff5b1d:0xbffd6962eb196a9d"}],
- endpoint:"https://script.google.com/macros/s/AKfycbyRjf_wEKJERsVKHHaCy00_Xanr3np_x-MceTXTCSlEx6rLskejPoPgRXfmUBhcd26b/exec" /* dán địa chỉ Web App của Google Apps Script vào đây */,
+ endpoint:"https://script.google.com/macros/s/AKfycbzCtbUEYOSCJyJuIePFicoKfTByqPnVhAsJIuniLANnCnPK_rW02IbRQzpq70qeyvqG/exec",
  guest:"......"
 };
 const $=s=>document.querySelector(s),C=CFG;
@@ -249,11 +249,14 @@ function size(){const k=Math.min(1,(innerWidth-24)/574);phs.forEach(d=>{d.style.
 let tx=0;cr.ontouchstart=e=>tx=e.touches[0].clientX;cr.ontouchend=e=>{const x=e.changedTouches[0].clientX-tx;if(Math.abs(x)>40){cur=(cur+(x<0?1:N-1))%N;draw()}};
 // lưu bút (lưu cục bộ trên trình duyệt)
 function send(o){if(C.endpoint){try{fetch(C.endpoint,{method:'POST',mode:'no-cors',body:JSON.stringify(o)})}catch(e){}}else{try{const k='tc_'+o.type,a=JSON.parse(localStorage.getItem(k)||'[]');a.push(o);localStorage.setItem(k,JSON.stringify(a))}catch(e){}}}
-let W=[];try{if(!C.endpoint)W=JSON.parse(localStorage.getItem('tc_w')||'[]')}catch(e){}
+function loadWishes(){if(!C.endpoint)return;const cb='__w'+Date.now(),sc=document.createElement('script');
+window[cb]=a=>{try{W=a.map(x=>[x.name,x.text,x.time]);localStorage.setItem('tc_wc',JSON.stringify(W))}catch(e){}rw();sc.remove();delete window[cb]};
+sc.onerror=()=>sc.remove();sc.src=C.endpoint+(C.endpoint.indexOf('?')>-1?'&':'?')+'action=wishes&callback='+cb+'&t='+Date.now();document.head.appendChild(sc)}
+let W=[];try{W=JSON.parse(localStorage.getItem(C.endpoint?'tc_wc':'tc_w')||'[]')}catch(e){}
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function rw(){$('#wl').innerHTML=W.map(w=>`<div class="wish"><span>${w[2]||''}</span><b>${esc(w[0])}</b><br>${esc(w[1])}</div>`).join('')||'<p class="soft">Hãy là người đầu tiên gửi lời chúc.</p>'}rw();
-if(C.endpoint)fetch(C.endpoint+'?action=wishes').then(r=>r.json()).then(a=>{W=a.map(x=>[x.name,x.text,x.time]);rw()}).catch(()=>{});
-$('#gb').onsubmit=e=>{e.preventDefault();send({type:'wish',name:$('#gn').value,text:$('#gt').value});W.unshift([$('#gn').value,$('#gt').value,new Date().toLocaleString('vi-VN')]);e.target.reset();rw()};
+loadWishes();
+$('#gb').onsubmit=e=>{e.preventDefault();send({type:'wish',name:$('#gn').value,text:$('#gt').value});W.unshift([$('#gn').value,$('#gt').value,new Date().toLocaleString('vi-VN')]);try{localStorage.setItem(C.endpoint?'tc_wc':'tc_w',JSON.stringify(W))}catch(x){}if(C.endpoint)setTimeout(loadWishes,2500);e.target.reset();rw()};
 const rd=document.createElement('dialog');rd.innerHTML=`<div class="modal" tabindex="-1" autofocus><h2 class="t" style="text-align:center">Xác nhận tham dự</h2><input id="rName" placeholder="Họ và tên*" maxlength="100" style="margin-bottom:10px"><select id="rAtt" style="margin-bottom:10px"><option>Tôi sẽ tham dự</option><option>Rất tiếc, tôi không tham dự được</option></select><input id="rCount" type="number" min="1" max="20" placeholder="Số người tham dự*" style="margin-bottom:10px"><label style="font-size:15px;display:block;margin-bottom:10px"><input type="checkbox" id="rCar" style="width:auto"> ${C.rsvpQs[0]}</label><div id="rDone" style="font-size:13px;min-height:18px;margin-bottom:8px" role="status"></div><div style="text-align:center"><button class="btn f" id="rSend">Gửi</button><button class="btn" id="rX" style="border:0;text-decoration:underline">Đóng</button></div></div>`;document.body.appendChild(rd);
 $('#rsvpBtn').onclick=()=>{$('#rDone').textContent='';document.body.classList.add('mo');rd.showModal();rd.firstElementChild.focus({preventScroll:true})};rd.addEventListener('close',()=>document.body.classList.remove('mo'));rd.onclick=e=>{if(e.target===rd)rd.close()};$('#rX').onclick=()=>rd.close();
 $('#rSend').onclick=()=>{const n=$('#rName').value.trim(),c=parseInt($('#rCount').value,10);
